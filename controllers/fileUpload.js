@@ -5,11 +5,11 @@ const File = require("../models/file");
 exports.localFileUpload = async (req, res) => {
   try {
     const file = req.files.file;
-    console.log("file aa gyi", file);
+   // console.log("file aa gyi", file);
     // kis path pr store krna hai
     let path =
       __dirname + "/files/" + Date.now() + `.${file.name.split(".")[1]}`;
-    console.log(path);
+    //console.log(path);
     // move the file
     file.mv(path, (err) => {
       console.log(err);
@@ -28,3 +28,6 @@ exports.localFileUpload = async (req, res) => {
     });
   }
 };
+
+
+
