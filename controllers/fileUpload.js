@@ -5,7 +5,7 @@ const File = require("../models/file");
 exports.localFileUpload = async (req, res) => {
   try {
     const file = req.files.file;
-   // console.log("file aa gyi", file);
+    // console.log("file aa gyi", file);
     // kis path pr store krna hai
     let path =
       __dirname + "/files/" + Date.now() + `.${file.name.split(".")[1]}`;
@@ -29,5 +29,68 @@ exports.localFileUpload = async (req, res) => {
   }
 };
 
+function isFileTypeSupported(fileType, suportedType) {
+  return suportedType.includes(fileType);
+}
 
+const cloudinary = require("cloudinary").v2;
 
+// const fileUploadToCloudinary = async (file, folder) => {
+
+// };
+async function fileUploadToCloudinary(file, folder) {
+  const option = {
+    folder,
+    public_id: file.name, // Set the file name as public_id
+    unique_filename: false, // Disable random name generation
+    overwrite: true, // Overwrite existing file with same name
+  };
+  return await cloudinary.uploader.upload(file.tempFilePath, option);
+}
+// image upload handler
+exports.imageUpload = async (req, res) => {
+  try {
+    //data fetching
+    const file = req.files.file;
+    const { name, tags, email } = req.body;
+    console.log(name, tags, email, file.name);
+    // console.log(file);
+
+    const suportedType = ["jpeg", "jpg", "png", "avif"];
+
+    const fileType = file.name.split(".").pop().toLowerCase();
+    // console.log(fileType);
+
+    //validation
+    if (!isFileTypeSupported(fileType, suportedType)) {
+      return res.status(401).json({
+        success: false,
+        message: "file type not supported",
+      });
+    }
+
+    // agar supported file hai to
+    const responce = await fileUploadToCloudinary(file, "database");
+    console.log(responce);
+    const data = File({
+      name,
+      email,
+      tags,
+      imageUrl: responce.secure_url,
+    });
+    // console.log(data);
+    const result = await data.save();
+    return res.status(200).json({
+      success: true,
+      result,
+      message: "image uploaded successfully",
+    });
+  } catch (err) {
+    console.log("err", err);
+    return res.status(400).json({
+      success: false,
+      data: err.message,
+      message: "internal server errr",
+    });
+  }
+};

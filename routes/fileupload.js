@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 //imageUpload , videoUpload, imageReducer,
-const { localFileUpload } = require("../controllers/fileUpload");
+const { localFileUpload, imageUpload } = require("../controllers/fileUpload");
 
 
 router.get("/test", (req,res)=>{
@@ -11,6 +11,10 @@ router.get("/test", (req,res)=>{
         message:"welcome to test route"
     })
 })
+
+
 router.post("/localfileupload", localFileUpload);
+router.post('/imageUpload',imageUpload);
+
 
 module.exports = router;
