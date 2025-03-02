@@ -38,15 +38,16 @@ const cloudinary = require("cloudinary").v2;
 // const fileUploadToCloudinary = async (file, folder) => {
 
 // };
-async function fileUploadToCloudinary(file, folder) {
+async function fileUploadToCloudinary(file, folder, quality = 100) {
   const option = {
     folder,
     public_id: file.name, // Set the file name as public_id
     unique_filename: false, // Disable random name generation
     overwrite: true, // Overwrite existing file with same name
     resource_type: "auto",
+    transformation: [{ quality }, { fetch_format: "auto" }],
   };
-  resource_type = "auto";
+
   return await cloudinary.uploader.upload(file.tempFilePath, option);
 }
 // image upload handler
@@ -140,8 +141,54 @@ exports.videoUpload = async (req, res) => {
     });
     return res.status(200).json({
       success: true,
-      data:response.secure_url,
+      data: response.secure_url,
       message: "file uploaded successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// image compresure
+
+exports.imagecompression = async (req, res) => {
+  try {
+    const file = req.files.file;
+    const { name, email, tags } = req.body;
+    // console.log(name, email, tags, file);
+
+    // vailidation
+    const fileType = file.name.split(".").pop().toLowerCase();
+    // console.log(fileType);
+    const supportedType = ["png", "jpeg", "jpg"];
+
+    if (!isFileTypeSupported(fileType, supportedType)) {
+      return res.status(402).json({
+        success: false,
+        message: "filetype not supported",
+      });
+    }
+    console.log("file supported");
+
+    // reduce and upload into cloudinary
+    const response = await fileUploadToCloudinary(file, "database", 10);
+    console.log(response.secure_url);
+
+    // create entry in database
+    const result = await File.create({
+      name,
+      tags,
+      email,
+      imageUrl: response.secure_url,
+    });
+    return res.status(200).json({
+      success: true,
+      data:response.secure_url,
+      message: "image reduce and uploaded",
     });
   } catch (err) {
     console.log(err);
