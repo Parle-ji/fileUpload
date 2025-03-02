@@ -44,7 +44,9 @@ async function fileUploadToCloudinary(file, folder) {
     public_id: file.name, // Set the file name as public_id
     unique_filename: false, // Disable random name generation
     overwrite: true, // Overwrite existing file with same name
+    resource_type: "auto",
   };
+  resource_type = "auto";
   return await cloudinary.uploader.upload(file.tempFilePath, option);
 }
 // image upload handler
@@ -91,6 +93,61 @@ exports.imageUpload = async (req, res) => {
       success: false,
       data: err.message,
       message: "internal server errr",
+    });
+  }
+};
+
+// video uploader
+
+exports.videoUpload = async (req, res) => {
+  try {
+    //data fetching
+    const { name, tags, email } = req.body;
+    const file = req.files.file;
+    // console.log(name, tags, email, file);
+
+    // validation
+
+    const fileType = file.name.split(".").pop().toLowerCase();
+    console.log("filetype:-", fileType);
+    const supportedType = ["mp4", "mov"];
+
+    if (!isFileTypeSupported(fileType, supportedType)) {
+      return res.status(400).json({
+        success: false,
+        message: "file type is not supported",
+      });
+    }
+
+    // agar supported hai to
+    // console.log("saving into cloude storage");
+    const response = await fileUploadToCloudinary(file, "database");
+    // console.log("response :-", response.secure_url);
+
+    if (!response) {
+      return res.status(401).json({
+        success: false,
+        message: "responce create krne me dikkat aayi.",
+      });
+    }
+
+    // agar response aa gya cloude storage se to database me entry create kro
+    const result = await File.create({
+      name,
+      email,
+      tags,
+      imageUrl: response.secure_url,
+    });
+    return res.status(200).json({
+      success: true,
+      data:response.secure_url,
+      message: "file uploaded successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
     });
   }
 };
