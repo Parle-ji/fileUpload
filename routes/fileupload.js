@@ -7,6 +7,7 @@ const {
   imageUpload,
   videoUpload,
   imagecompression,
+  videoReducer,
 } = require("../controllers/fileUpload");
 
 router.get("/test", (req, res) => {
@@ -20,4 +21,6 @@ router.post("/localfileupload", localFileUpload);
 router.post("/imageUpload", imageUpload);
 router.post("/videoupload", videoUpload);
 router.post("/imagecompression", imagecompression);
+router.post("/videoreducer", videoReducer);
+
 module.exports = router;

@@ -109,6 +109,15 @@ exports.videoUpload = async (req, res) => {
 
     // validation
 
+    const maxSize = 5 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      return res.status(402).json({
+        success: false,
+        message: "file size is too large",
+      });
+    }
+
     const fileType = file.name.split(".").pop().toLowerCase();
     console.log("filetype:-", fileType);
     const supportedType = ["mp4", "mov"];
@@ -176,7 +185,7 @@ exports.imagecompression = async (req, res) => {
 
     // reduce and upload into cloudinary
     const response = await fileUploadToCloudinary(file, "database", 10);
-    console.log(response.secure_url);
+    console.log("URL:-", response.secure_url);
 
     // create entry in database
     const result = await File.create({
@@ -185,10 +194,61 @@ exports.imagecompression = async (req, res) => {
       email,
       imageUrl: response.secure_url,
     });
+
     return res.status(200).json({
       success: true,
-      data:response.secure_url,
+      data: response.secure_url,
       message: "image reduce and uploaded",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// video reducer
+
+exports.videoReducer = async (req, res) => {
+  try {
+    const file = req.files.file;
+    const { name, tags, email } = req.body;
+
+    // console.log(name, tags, email);
+    // console.log(file.name, file.size);
+
+    // vailidation
+    const supportedType = ["mp4", "3gp", "mov"];
+    const fileType = file.name.split(".").pop().toLowerCase();
+    console.log(fileType);
+
+    if (!isFileTypeSupported(fileType, supportedType)) {
+      return res.status(402).json({
+        success: false,
+        message: "file type not supported",
+      });
+    }
+    //upload to cloudinary db
+    console.log("file type supported");
+    const response = await fileUploadToCloudinary(file, "database", 50);
+    // console.log(response.secure_url);
+    // console.log("response:-", response)
+
+    //create entry in database
+    const result = await File.create({
+      name,
+      email,
+      tags,
+      imageUrl: response.secure_url,
+    });
+
+    // success message
+    return res.status(200).json({
+      success: true,
+      data: response.secure_url,
+      message: "file uploaded to cloudinary",
     });
   } catch (err) {
     console.log(err);
